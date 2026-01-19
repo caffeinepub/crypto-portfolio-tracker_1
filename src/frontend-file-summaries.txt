@@ -1,0 +1,20 @@
+{
+  "frontend/src/App.tsx": "Main application component that handles authentication flow, profile setup, and renders the dashboard with theme provider and toast notifications.",
+  "frontend/src/hooks/useQueries.ts": "Custom React Query hooks for all backend operations including user profiles, holdings with amountInvestedGBP field, staking rewards, portfolio metrics, and new incrementHolding mutation with proper cache invalidation.",
+  "frontend/src/components/Header.tsx": "Application header with branding, theme toggle, user greeting, and login/logout functionality.",
+  "frontend/src/components/Footer.tsx": "Simple footer component with copyright and attribution to caffeine.ai.",
+  "frontend/src/components/LoginPrompt.tsx": "Landing page for unauthenticated users showcasing app features and login button.",
+  "frontend/src/components/ProfileSetupModal.tsx": "Modal dialog for first-time users to set up their profile with name input.",
+  "frontend/src/pages/Dashboard.tsx": "Main dashboard page with portfolio overview and tabbed interface for managing holdings and staking rewards.",
+  "frontend/src/components/PortfolioOverview.tsx": "Portfolio summary cards showing total value, cost, gain/loss, and percentage change in GBP with time range filters and chart, now using currentValueGBP field for cost calculations.",
+  "frontend/src/components/PortfolioChart.tsx": "Interactive line chart component that visualizes portfolio value evolution over time in GBP using Recharts, now showing current portfolio value across time periods with staking rewards factored in by their reward dates.",
+  "frontend/src/components/HoldingsManager.tsx": "Table view for managing crypto holdings with add, edit, increment, and delete functionality, displaying amount invested, live market value, and gain/loss calculations in GBP with \"+\" button for incrementing holdings.",
+  "frontend/src/components/AddHoldingDialog.tsx": "Dialog form for adding new cryptocurrency holdings with autocomplete dropdown for symbol selection including new tokens (SUI, ONYX, XTZ, BONK, AMP), supporting keyboard navigation and Amount Invested (£) field.",
+  "frontend/src/components/EditHoldingDialog.tsx": "Dialog form for editing existing cryptocurrency holdings with Amount Invested (£) field in GBP, using amountInvestedGBP from backend.",
+  "frontend/src/components/StakingRewardsManager.tsx": "Table view for managing staking rewards with add, edit, and delete functionality, displaying all values in GBP.",
+  "frontend/src/components/AddStakingRewardDialog.tsx": "Dialog form for adding new staking rewards with symbol, amount, and date inputs.",
+  "frontend/src/components/EditStakingRewardDialog.tsx": "Dialog form for editing existing staking rewards.",
+  "frontend/src/hooks/useCryptoPrices.ts": "Custom React Query hook that fetches real-time cryptocurrency prices in GBP from CoinGecko API with extended symbol-to-ID mappings including SUI, ONYX, XTZ, BONK, and AMP for accurate price retrieval.",
+  "frontend/src/index.css": "Global styles with OKLCH color system featuring purple/blue theme for both light and dark modes.",
+  "frontend/src/components/IncrementHoldingDialog.tsx": "Dialog form for incrementing existing holdings by adding additional units purchased, automatically recalculating total amount and amount invested in GBP."
+}
