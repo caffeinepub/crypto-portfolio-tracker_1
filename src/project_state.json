@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-remove-the-staking-rewards-stacking-reward-tab-from-the-dashboard-ui-so-users-can-no-longer-navigate-to-staking-rewards-management-via-tabs-update-the-dashboard-layout-accordingly-e-g-remove-the-rewards-tab-trigger-content-and-any-now-unused-imports-while-keeping-the-holdings-view-functional-and-shown-by-default",
+      "title": "Remove the \"Staking Rewards\" (\"stacking reward\") tab from the Dashboard UI so users can no longer navigate to staking rewards management via tabs. Update the Dashboard layout accordingly (e.g., remove the rewards tab trigger/content and any now-unused imports), while keeping the Holdings view functional and shown by default.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Remove the stacking reward tab from the app UI/navigation",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Remove Staking Rewards tab from Dashboard UI",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

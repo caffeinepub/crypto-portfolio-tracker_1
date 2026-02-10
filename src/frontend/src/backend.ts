@@ -97,9 +97,14 @@ export interface PortfolioMetrics {
 export type Time = bigint;
 export interface StakingReward {
     id: bigint;
-    rewardDate: Time;
+    rewardDate: bigint;
     amount: number;
     symbol: string;
+}
+export interface PortfolioHistoryRecord {
+    totalValueGBP: number;
+    timestamp: bigint;
+    totalInvestedGBP: number;
 }
 export interface CryptoHolding {
     id: bigint;
@@ -111,9 +116,14 @@ export interface CryptoHolding {
 export interface UserProfile {
     name: string;
 }
+export interface LivePortfolioSnapshot {
+    totalValueGBP: number;
+    timestamp: bigint;
+}
 export enum TimeRange {
     day = "day",
     month = "month",
+    hourlyLive = "hourlyLive",
     week = "week",
     year = "year",
     allTime = "allTime",
@@ -127,17 +137,22 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addHolding(symbol: string, amount: number, amountInvestedGBP: number, currentValueGBP: number): Promise<bigint>;
+    addLivePortfolioSnapshot(timestamp: Time, totalValueGBP: number): Promise<void>;
+    addPortfolioHistoryRecord(timestamp: Time, totalValueGBP: number, totalInvestedGBP: number): Promise<void>;
     addStakingReward(symbol: string, amount: number, rewardDate: Time): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deleteHolding(id: bigint): Promise<void>;
     deleteStakingReward(id: bigint): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getHoldings(): Promise<Array<CryptoHolding>>;
+    getHoldings(sortBy: string): Promise<Array<CryptoHolding>>;
+    getIndividualCryptoHistory(_symbol: string, _fromTimestamp: Time, _toTimestamp: Time): Promise<Array<PortfolioHistoryRecord>>;
+    getLivePortfolioHistory(fromTimestamp: Time, toTimestamp: Time): Promise<Array<LivePortfolioSnapshot>>;
+    getPortfolioHistory(fromTimestamp: Time, toTimestamp: Time): Promise<Array<PortfolioHistoryRecord>>;
     getPortfolioMetrics(_timeRange: TimeRange): Promise<PortfolioMetrics>;
     getStakingRewards(): Promise<Array<StakingReward>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
-    incrementHolding(id: bigint, additionalAmount: number, additionalInvestmentGBP: number): Promise<void>;
+    incrementHolding(id: bigint, additionalInvestmentGBP: number): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     updateHolding(id: bigint, symbol: string, amount: number, amountInvestedGBP: number, currentValueGBP: number): Promise<void>;
@@ -171,6 +186,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.addHolding(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async addLivePortfolioSnapshot(arg0: Time, arg1: number): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addLivePortfolioSnapshot(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addLivePortfolioSnapshot(arg0, arg1);
+            return result;
+        }
+    }
+    async addPortfolioHistoryRecord(arg0: Time, arg1: number, arg2: number): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addPortfolioHistoryRecord(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addPortfolioHistoryRecord(arg0, arg1, arg2);
             return result;
         }
     }
@@ -258,17 +301,59 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getHoldings(): Promise<Array<CryptoHolding>> {
+    async getHoldings(arg0: string): Promise<Array<CryptoHolding>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getHoldings();
+                const result = await this.actor.getHoldings(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getHoldings();
+            const result = await this.actor.getHoldings(arg0);
+            return result;
+        }
+    }
+    async getIndividualCryptoHistory(arg0: string, arg1: Time, arg2: Time): Promise<Array<PortfolioHistoryRecord>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getIndividualCryptoHistory(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getIndividualCryptoHistory(arg0, arg1, arg2);
+            return result;
+        }
+    }
+    async getLivePortfolioHistory(arg0: Time, arg1: Time): Promise<Array<LivePortfolioSnapshot>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getLivePortfolioHistory(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getLivePortfolioHistory(arg0, arg1);
+            return result;
+        }
+    }
+    async getPortfolioHistory(arg0: Time, arg1: Time): Promise<Array<PortfolioHistoryRecord>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPortfolioHistory(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPortfolioHistory(arg0, arg1);
             return result;
         }
     }
@@ -314,17 +399,17 @@ export class Backend implements backendInterface {
             return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
         }
     }
-    async incrementHolding(arg0: bigint, arg1: number, arg2: number): Promise<void> {
+    async incrementHolding(arg0: bigint, arg1: number): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.incrementHolding(arg0, arg1, arg2);
+                const result = await this.actor.incrementHolding(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.incrementHolding(arg0, arg1, arg2);
+            const result = await this.actor.incrementHolding(arg0, arg1);
             return result;
         }
     }
@@ -426,6 +511,8 @@ function to_candid_variant_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8
 } | {
     month: null;
 } | {
+    hourlyLive: null;
+} | {
     week: null;
 } | {
     year: null;
@@ -438,6 +525,8 @@ function to_candid_variant_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         day: null
     } : value == TimeRange.month ? {
         month: null
+    } : value == TimeRange.hourlyLive ? {
+        hourlyLive: null
     } : value == TimeRange.week ? {
         week: null
     } : value == TimeRange.year ? {

@@ -1,146 +1,232 @@
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useGetHoldings, useGetStakingRewards } from '../hooks/useQueries';
-import { TimeRange } from '../backend';
-import { TrendingUp, TrendingDown, Wallet, PoundSterling } from 'lucide-react';
-import PortfolioChart from './PortfolioChart';
+import { TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 import { useCryptoPrices } from '../hooks/useCryptoPrices';
 
-interface PortfolioOverviewProps {
-  timeRange: TimeRange;
-  onTimeRangeChange: (range: TimeRange) => void;
-}
+// Crypto logo mapping
+const CRYPTO_LOGOS: Record<string, string> = {
+  BTC: '/assets/generated/btc-logo-transparent.dim_64x64.png',
+  ETH: '/assets/generated/eth-logo-transparent.dim_64x64.png',
+  ADA: '/assets/generated/ada-logo-transparent.dim_64x64.png',
+  SOL: '/assets/generated/sol-logo-transparent.dim_64x64.png',
+  DOT: '/assets/generated/dot-logo-transparent.dim_64x64.png',
+  AVAX: '/assets/generated/avax-logo-transparent.dim_64x64.png',
+  MATIC: '/assets/generated/matic-logo-transparent.dim_64x64.png',
+  XRP: '/assets/generated/xrp-logo-transparent.dim_64x64.png',
+  SUI: '/assets/generated/sui-logo-transparent.dim_64x64.png',
+  ICP: '/assets/generated/icp-logo-transparent.dim_64x64.png',
+  XTZ: '/assets/generated/xtz-logo-transparent.dim_64x64.png',
+  BONK: '/assets/generated/bonk-logo-transparent.dim_64x64.png',
+  AMP: '/assets/generated/amp-logo-transparent.dim_64x64.png',
+  ONYX: '/assets/generated/onyx-logo-transparent.dim_64x64.png',
+  XCN: '/assets/generated/onyx-logo-transparent.dim_64x64.png',
+};
 
-const timeRangeOptions = [
-  { value: TimeRange.day, label: '1D' },
-  { value: TimeRange.week, label: '1W' },
-  { value: TimeRange.month, label: '1M' },
-  { value: TimeRange.sixMonths, label: '6M' },
-  { value: TimeRange.year, label: '1Y' },
-  { value: TimeRange.allTime, label: 'All' },
-];
+export default function PortfolioOverview() {
+  const { data: holdings = [], isLoading: holdingsLoading } = useGetHoldings();
+  const { data: rewards = [], isLoading: rewardsLoading } = useGetStakingRewards();
+  const { prices, isLoading: pricesLoading, isFetching: pricesFetching } = useCryptoPrices(holdings, rewards);
 
-export default function PortfolioOverview({ timeRange, onTimeRangeChange }: PortfolioOverviewProps) {
-  const { data: holdings = [] } = useGetHoldings();
-  const { data: rewards = [] } = useGetStakingRewards();
-  const { prices, isLoading: pricesLoading } = useCryptoPrices(holdings, rewards);
-
-  const metrics = useMemo(() => {
-    if (pricesLoading || !prices) {
-      return { totalValue: 0, totalCost: 0, totalGainLoss: 0, percentageChange: 0 };
+  // BULLETPROOF: Calculate metrics with stable dependencies to prevent recalculation issues
+  const { metrics, assetCards } = useMemo(() => {
+    // Always calculate metrics even during price updates - prevents data disappearance
+    const hasPrices = Object.keys(prices).length > 0;
+    
+    if (!hasPrices) {
+      return { 
+        metrics: { totalValue: 0, totalCost: 0, totalGainLoss: 0, percentageChange: 0 },
+        assetCards: []
+      };
     }
 
     let totalValue = 0;
     let totalCost = 0;
 
-    // Calculate holdings value
+    // Group holdings and rewards by symbol for card display
+    const assetMap = new Map<string, { 
+      symbol: string; 
+      amount: number; 
+      invested: number; 
+      currentValue: number;
+      gainLoss: number;
+      gainLossPercent: number;
+    }>();
+
+    // Process holdings
     holdings.forEach((holding) => {
-      const price = prices[holding.symbol.toUpperCase()] || 0;
-      totalValue += holding.amount * price;
-      totalCost += holding.currentValueGBP;
+      const symbol = holding.symbol.toUpperCase();
+      const price = prices[symbol] || 0;
+      const currentValueGBP = holding.amount * price;
+      
+      totalValue += currentValueGBP;
+      totalCost += holding.amountInvestedGBP;
+
+      const existing = assetMap.get(symbol);
+      if (existing) {
+        existing.amount += holding.amount;
+        existing.invested += holding.amountInvestedGBP;
+        existing.currentValue += currentValueGBP;
+      } else {
+        assetMap.set(symbol, {
+          symbol,
+          amount: holding.amount,
+          invested: holding.amountInvestedGBP,
+          currentValue: currentValueGBP,
+          gainLoss: 0,
+          gainLossPercent: 0,
+        });
+      }
     });
 
     // Add staking rewards value (assuming they were received at £0 cost)
     rewards.forEach((reward) => {
-      const price = prices[reward.symbol.toUpperCase()] || 0;
-      totalValue += reward.amount * price;
+      const symbol = reward.symbol.toUpperCase();
+      const price = prices[symbol] || 0;
+      const rewardValue = reward.amount * price;
+      totalValue += rewardValue;
+
+      const existing = assetMap.get(symbol);
+      if (existing) {
+        existing.amount += reward.amount;
+        existing.currentValue += rewardValue;
+      } else {
+        assetMap.set(symbol, {
+          symbol,
+          amount: reward.amount,
+          invested: 0,
+          currentValue: rewardValue,
+          gainLoss: 0,
+          gainLossPercent: 0,
+        });
+      }
+    });
+
+    // Calculate gain/loss for each asset
+    assetMap.forEach((asset) => {
+      asset.gainLoss = asset.currentValue - asset.invested;
+      asset.gainLossPercent = asset.invested > 0 ? (asset.gainLoss / asset.invested) * 100 : 0;
     });
 
     const totalGainLoss = totalValue - totalCost;
     const percentageChange = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
-    return { totalValue, totalCost, totalGainLoss, percentageChange };
-  }, [holdings, rewards, prices, pricesLoading]);
+    // Convert to array and sort by current value
+    const assetCards = Array.from(assetMap.values())
+      .sort((a, b) => b.currentValue - a.currentValue);
+
+    return { 
+      metrics: { totalValue, totalCost, totalGainLoss, percentageChange },
+      assetCards
+    };
+  }, [holdings, rewards, prices]); // STABLE: Only recalculate when actual data changes
 
   const isPositive = metrics.totalGainLoss >= 0;
+  // Only show initial loading when we have no data at all
+  const isInitialLoading = holdingsLoading || rewardsLoading || (pricesLoading && Object.keys(prices).length === 0);
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <PoundSterling className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              £{pricesLoading ? '...' : metrics.totalValue.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground">Current portfolio value</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              £{metrics.totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground">Total invested</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gain/Loss</CardTitle>
-            {isPositive ? (
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
+      {/* Portfolio Metrics Section with Minimalist Gradient */}
+      <div className="relative overflow-hidden rounded-3xl p-8 border border-border/50 shadow-elevated bg-card backdrop-blur-sm">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/8 to-transparent rounded-full blur-3xl -z-10" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className={`h-5 w-5 text-primary ${pricesFetching ? 'animate-pulse-glow' : ''}`} />
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total Portfolio Value</span>
+            {pricesFetching && !isInitialLoading && (
+              <span className="text-xs text-primary font-medium animate-pulse">Updating...</span>
             )}
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {isPositive ? '+' : ''}£{pricesLoading ? '...' : metrics.totalGainLoss.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground">Absolute change</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Change %</CardTitle>
-            {isPositive ? (
-              <TrendingUp className="h-4 w-4 text-green-500" />
+          </div>
+          <div className="text-5xl md:text-6xl font-bold mb-3 animate-fade-in-glow">
+            {isInitialLoading ? (
+              <span className="text-muted-foreground">Loading...</span>
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
+              <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                £{metrics.totalValue.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
             )}
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {isPositive ? '+' : ''}{pricesLoading ? '...' : metrics.percentageChange.toFixed(2)}%
-            </div>
-            <p className="text-xs text-muted-foreground">Percentage change</p>
-          </CardContent>
-        </Card>
+          </div>
+          <div className={`flex items-center gap-2 text-lg font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+            {isInitialLoading ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              <>
+                {isPositive ? <TrendingUp className="h-6 w-6" /> : <TrendingDown className="h-6 w-6" />}
+                <span className="text-xl">
+                  {isPositive ? '+' : ''}£{metrics.totalGainLoss.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-base font-semibold">
+                  ({isPositive ? '+' : ''}{metrics.percentageChange.toFixed(2)}%)
+                </span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Portfolio Performance</CardTitle>
-            <div className="flex gap-1">
-              {timeRangeOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  variant={timeRange === option.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onTimeRangeChange(option.value)}
+      {/* Modern Dark Theme Asset Cards Grid */}
+      {assetCards.length > 0 && (
+        <div>
+          <h3 className="text-2xl font-bold mb-5 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            Your Assets
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {assetCards.map((asset) => {
+              const isAssetPositive = asset.gainLoss >= 0;
+              const logo = CRYPTO_LOGOS[asset.symbol];
+              
+              return (
+                <div
+                  key={asset.symbol}
+                  className="group relative overflow-hidden bg-card border border-border/50 rounded-2xl p-5 hover:shadow-card-hover hover:border-primary/30 transition-all duration-300 hover:scale-[1.02] cursor-pointer animate-fade-in"
                 >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
+                  {/* Subtle gradient background on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        {logo ? (
+                          <div className="p-1.5 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+                            <img src={logo} alt={asset.symbol} className="w-10 h-10 rounded-lg" />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/15 border border-primary/20 flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary">{asset.symbol.slice(0, 2)}</span>
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-bold text-lg text-foreground">{asset.symbol}</div>
+                          <div className="text-xs text-muted-foreground font-medium">
+                            {asset.amount.toFixed(4)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-2xl font-bold text-foreground animate-value-change">
+                        £{asset.currentValue.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <div className={`flex items-center gap-1.5 text-sm font-bold ${isAssetPositive ? 'text-green-500' : 'text-red-500'}`}>
+                        {isAssetPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                        <span>
+                          {isAssetPositive ? '+' : ''}£{Math.abs(asset.gainLoss).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className="text-xs font-semibold">
+                          ({isAssetPositive ? '+' : ''}{asset.gainLossPercent.toFixed(2)}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </CardHeader>
-        <CardContent>
-          <PortfolioChart holdings={holdings} rewards={rewards} timeRange={timeRange} prices={prices} />
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }

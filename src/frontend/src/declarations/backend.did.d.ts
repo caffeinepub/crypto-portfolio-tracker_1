@@ -17,6 +17,15 @@ export interface CryptoHolding {
   'amount' : number,
   'symbol' : string,
 }
+export interface LivePortfolioSnapshot {
+  'totalValueGBP' : number,
+  'timestamp' : bigint,
+}
+export interface PortfolioHistoryRecord {
+  'totalValueGBP' : number,
+  'timestamp' : bigint,
+  'totalInvestedGBP' : number,
+}
 export interface PortfolioMetrics {
   'totalValueGBP' : number,
   'totalGainLossGBP' : number,
@@ -24,13 +33,14 @@ export interface PortfolioMetrics {
 }
 export interface StakingReward {
   'id' : bigint,
-  'rewardDate' : Time,
+  'rewardDate' : bigint,
   'amount' : number,
   'symbol' : string,
 }
 export type Time = bigint;
 export type TimeRange = { 'day' : null } |
   { 'month' : null } |
+  { 'hourlyLive' : null } |
   { 'week' : null } |
   { 'year' : null } |
   { 'allTime' : null } |
@@ -42,17 +52,31 @@ export type UserRole = { 'admin' : null } |
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addHolding' : ActorMethod<[string, number, number, number], bigint>,
+  'addLivePortfolioSnapshot' : ActorMethod<[Time, number], undefined>,
+  'addPortfolioHistoryRecord' : ActorMethod<[Time, number, number], undefined>,
   'addStakingReward' : ActorMethod<[string, number, Time], bigint>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'deleteHolding' : ActorMethod<[bigint], undefined>,
   'deleteStakingReward' : ActorMethod<[bigint], undefined>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getHoldings' : ActorMethod<[], Array<CryptoHolding>>,
+  'getHoldings' : ActorMethod<[string], Array<CryptoHolding>>,
+  'getIndividualCryptoHistory' : ActorMethod<
+    [string, Time, Time],
+    Array<PortfolioHistoryRecord>
+  >,
+  'getLivePortfolioHistory' : ActorMethod<
+    [Time, Time],
+    Array<LivePortfolioSnapshot>
+  >,
+  'getPortfolioHistory' : ActorMethod<
+    [Time, Time],
+    Array<PortfolioHistoryRecord>
+  >,
   'getPortfolioMetrics' : ActorMethod<[TimeRange], PortfolioMetrics>,
   'getStakingRewards' : ActorMethod<[], Array<StakingReward>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
-  'incrementHolding' : ActorMethod<[bigint, number, number], undefined>,
+  'incrementHolding' : ActorMethod<[bigint, number], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'updateHolding' : ActorMethod<

@@ -166,15 +166,15 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Add Crypto Holding</DialogTitle>
-          <DialogDescription>Add a new cryptocurrency to your portfolio</DialogDescription>
+          <DialogTitle className="text-2xl font-bold">Add Crypto Holding</DialogTitle>
+          <DialogDescription className="text-base font-medium">Add a new cryptocurrency to your portfolio</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label htmlFor="symbol">Symbol</Label>
+              <Label htmlFor="symbol" className="text-sm font-semibold">Symbol</Label>
               <div className="relative">
                 <Input
                   ref={inputRef}
@@ -186,25 +186,26 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
                   onKeyDown={handleKeyDown}
                   disabled={addHolding.isPending}
                   autoComplete="off"
+                  className="rounded-xl font-medium"
                 />
                 {showSuggestions && filteredCryptos.length > 0 && (
                   <div
                     ref={suggestionsRef}
-                    className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                    className="absolute z-50 w-full mt-2 bg-popover border border-border rounded-xl shadow-card-hover max-h-60 overflow-auto"
                   >
                     {filteredCryptos.map((crypto, index) => (
                       <button
                         key={crypto.symbol}
                         type="button"
                         onClick={() => selectCrypto(crypto)}
-                        className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-accent hover:text-accent-foreground transition-colors ${
-                          index === selectedIndex ? 'bg-accent text-accent-foreground' : ''
+                        className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between hover:bg-accent/20 transition-colors ${
+                          index === selectedIndex ? 'bg-accent/20' : ''
                         }`}
                         onMouseEnter={() => setSelectedIndex(index)}
                       >
                         <div className="flex flex-col">
-                          <span className="font-medium">{crypto.symbol}</span>
-                          <span className="text-xs text-muted-foreground">{crypto.name}</span>
+                          <span className="font-bold">{crypto.symbol}</span>
+                          <span className="text-xs text-muted-foreground font-medium">{crypto.name}</span>
                         </div>
                         {symbol.toUpperCase() === crypto.symbol && (
                           <Check className="h-4 w-4 text-primary" />
@@ -216,7 +217,7 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount" className="text-sm font-semibold">Amount</Label>
               <Input
                 id="amount"
                 type="number"
@@ -225,10 +226,11 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 disabled={addHolding.isPending}
+                className="rounded-xl font-medium"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="amountInvested">Amount Invested (£)</Label>
+              <Label htmlFor="amountInvested" className="text-sm font-semibold">Amount Invested (£)</Label>
               <Input
                 id="amountInvested"
                 type="number"
@@ -237,14 +239,15 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
                 value={amountInvested}
                 onChange={(e) => setAmountInvested(e.target.value)}
                 disabled={addHolding.isPending}
+                className="rounded-xl font-medium"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={addHolding.isPending}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={addHolding.isPending} className="rounded-xl font-semibold">
               Cancel
             </Button>
-            <Button type="submit" disabled={addHolding.isPending}>
+            <Button type="submit" disabled={addHolding.isPending} className="rounded-xl font-semibold">
               {addHolding.isPending ? 'Adding...' : 'Add Holding'}
             </Button>
           </DialogFooter>
@@ -253,3 +256,4 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
     </Dialog>
   );
 }
+

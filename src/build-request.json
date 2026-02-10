@@ -1,0 +1,50 @@
+{
+  "kind": "build_request",
+  "title": "Remove Staking Rewards tab from Dashboard UI",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Remove the \"Staking Rewards\" (\"stacking reward\") tab from the Dashboard UI so users can no longer navigate to staking rewards management via tabs. Update the Dashboard layout accordingly (e.g., remove the rewards tab trigger/content and any now-unused imports), while keeping the Holdings view functional and shown by default.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "can you remove the stacking reward tab"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Dashboard no longer renders a tab trigger labeled \"Staking Rewards\".",
+        "Dashboard no longer renders the staking rewards tab content panel.",
+        "Holdings management UI remains accessible and is the default/primary view on the Dashboard.",
+        "No unused imports remain in frontend/src/pages/Dashboard.tsx after the tab removal.",
+        "App builds without TypeScript/ESLint errors related to removed staking rewards tab UI."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit files under frontend/src/components/ui (read-only shadcn components).",
+    "Keep backend staking reward APIs and stored staking reward data unchanged unless explicitly requested."
+  ],
+  "nonGoals": [
+    "Deleting staking rewards data from the backend canister state.",
+    "Removing staking rewards-related calculations in PortfolioOverview, charts, or composition metrics.",
+    "Removing staking rewards CRUD dialogs/components and React Query hooks (only remove the UI tab/navigation entrypoint)."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

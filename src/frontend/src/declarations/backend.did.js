@@ -22,9 +22,19 @@ export const CryptoHolding = IDL.Record({
   'amount' : IDL.Float64,
   'symbol' : IDL.Text,
 });
+export const PortfolioHistoryRecord = IDL.Record({
+  'totalValueGBP' : IDL.Float64,
+  'timestamp' : IDL.Int,
+  'totalInvestedGBP' : IDL.Float64,
+});
+export const LivePortfolioSnapshot = IDL.Record({
+  'totalValueGBP' : IDL.Float64,
+  'timestamp' : IDL.Int,
+});
 export const TimeRange = IDL.Variant({
   'day' : IDL.Null,
   'month' : IDL.Null,
+  'hourlyLive' : IDL.Null,
   'week' : IDL.Null,
   'year' : IDL.Null,
   'allTime' : IDL.Null,
@@ -37,7 +47,7 @@ export const PortfolioMetrics = IDL.Record({
 });
 export const StakingReward = IDL.Record({
   'id' : IDL.Nat,
-  'rewardDate' : Time,
+  'rewardDate' : IDL.Int,
   'amount' : IDL.Float64,
   'symbol' : IDL.Text,
 });
@@ -49,13 +59,34 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
+  'addLivePortfolioSnapshot' : IDL.Func([Time, IDL.Float64], [], []),
+  'addPortfolioHistoryRecord' : IDL.Func(
+      [Time, IDL.Float64, IDL.Float64],
+      [],
+      [],
+    ),
   'addStakingReward' : IDL.Func([IDL.Text, IDL.Float64, Time], [IDL.Nat], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'deleteHolding' : IDL.Func([IDL.Nat], [], []),
   'deleteStakingReward' : IDL.Func([IDL.Nat], [], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getHoldings' : IDL.Func([], [IDL.Vec(CryptoHolding)], ['query']),
+  'getHoldings' : IDL.Func([IDL.Text], [IDL.Vec(CryptoHolding)], ['query']),
+  'getIndividualCryptoHistory' : IDL.Func(
+      [IDL.Text, Time, Time],
+      [IDL.Vec(PortfolioHistoryRecord)],
+      ['query'],
+    ),
+  'getLivePortfolioHistory' : IDL.Func(
+      [Time, Time],
+      [IDL.Vec(LivePortfolioSnapshot)],
+      ['query'],
+    ),
+  'getPortfolioHistory' : IDL.Func(
+      [Time, Time],
+      [IDL.Vec(PortfolioHistoryRecord)],
+      ['query'],
+    ),
   'getPortfolioMetrics' : IDL.Func([TimeRange], [PortfolioMetrics], ['query']),
   'getStakingRewards' : IDL.Func([], [IDL.Vec(StakingReward)], ['query']),
   'getUserProfile' : IDL.Func(
@@ -63,7 +94,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
-  'incrementHolding' : IDL.Func([IDL.Nat, IDL.Float64, IDL.Float64], [], []),
+  'incrementHolding' : IDL.Func([IDL.Nat, IDL.Float64], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'updateHolding' : IDL.Func(
@@ -95,9 +126,19 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Float64,
     'symbol' : IDL.Text,
   });
+  const PortfolioHistoryRecord = IDL.Record({
+    'totalValueGBP' : IDL.Float64,
+    'timestamp' : IDL.Int,
+    'totalInvestedGBP' : IDL.Float64,
+  });
+  const LivePortfolioSnapshot = IDL.Record({
+    'totalValueGBP' : IDL.Float64,
+    'timestamp' : IDL.Int,
+  });
   const TimeRange = IDL.Variant({
     'day' : IDL.Null,
     'month' : IDL.Null,
+    'hourlyLive' : IDL.Null,
     'week' : IDL.Null,
     'year' : IDL.Null,
     'allTime' : IDL.Null,
@@ -110,7 +151,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const StakingReward = IDL.Record({
     'id' : IDL.Nat,
-    'rewardDate' : Time,
+    'rewardDate' : IDL.Int,
     'amount' : IDL.Float64,
     'symbol' : IDL.Text,
   });
@@ -122,13 +163,34 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Nat],
         [],
       ),
+    'addLivePortfolioSnapshot' : IDL.Func([Time, IDL.Float64], [], []),
+    'addPortfolioHistoryRecord' : IDL.Func(
+        [Time, IDL.Float64, IDL.Float64],
+        [],
+        [],
+      ),
     'addStakingReward' : IDL.Func([IDL.Text, IDL.Float64, Time], [IDL.Nat], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'deleteHolding' : IDL.Func([IDL.Nat], [], []),
     'deleteStakingReward' : IDL.Func([IDL.Nat], [], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getHoldings' : IDL.Func([], [IDL.Vec(CryptoHolding)], ['query']),
+    'getHoldings' : IDL.Func([IDL.Text], [IDL.Vec(CryptoHolding)], ['query']),
+    'getIndividualCryptoHistory' : IDL.Func(
+        [IDL.Text, Time, Time],
+        [IDL.Vec(PortfolioHistoryRecord)],
+        ['query'],
+      ),
+    'getLivePortfolioHistory' : IDL.Func(
+        [Time, Time],
+        [IDL.Vec(LivePortfolioSnapshot)],
+        ['query'],
+      ),
+    'getPortfolioHistory' : IDL.Func(
+        [Time, Time],
+        [IDL.Vec(PortfolioHistoryRecord)],
+        ['query'],
+      ),
     'getPortfolioMetrics' : IDL.Func(
         [TimeRange],
         [PortfolioMetrics],
@@ -140,7 +202,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
-    'incrementHolding' : IDL.Func([IDL.Nat, IDL.Float64, IDL.Float64], [], []),
+    'incrementHolding' : IDL.Func([IDL.Nat, IDL.Float64], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'updateHolding' : IDL.Func(

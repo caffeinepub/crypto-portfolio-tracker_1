@@ -1,0 +1,25 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Remove Staking Rewards tab from Dashboard UI",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Remove the Staking Rewards tab trigger and content from the Dashboard while keeping Holdings as the default/primary view and cleaning up unused imports.",
+      "acceptanceCriteria": [
+        "Dashboard no longer renders a tab trigger labeled \"Staking Rewards\".",
+        "Dashboard no longer renders the staking rewards tab content panel.",
+        "Holdings management UI remains accessible and is the default/primary view on the Dashboard.",
+        "No unused imports remain in frontend/src/pages/Dashboard.tsx after the tab removal.",
+        "App builds without TypeScript/ESLint errors related to removed staking rewards tab UI."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Remove the \"Staking Rewards\" TabsTrigger and its corresponding TabsContent (and the StakingRewardsManager import). Update the TabsList/layout accordingly (e.g., adjust grid-cols from 2 to 1, or remove Tabs entirely and render HoldingsManager directly) so Holdings remains the default/primary view and no now-unused imports remain."
+        }
+      ]
+    }
+  ]
+}

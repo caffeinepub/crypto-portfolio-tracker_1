@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { CryptoHolding, StakingReward, UserProfile, TimeRange, PortfolioMetrics } from '../backend';
+import type { CryptoHolding, StakingReward, UserProfile, TimeRange, PortfolioMetrics, LivePortfolioSnapshot } from '../backend';
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -14,6 +14,8 @@ export function useGetCallerUserProfile() {
     },
     enabled: !!actor && !actorFetching,
     retry: false,
+    gcTime: Infinity, // Never garbage collect user profile
+    staleTime: Infinity, // Profile doesn't become stale
   });
 
   return {
@@ -38,7 +40,7 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-// Holdings Queries
+// Holdings Queries with bulletproof data persistence
 export function useGetHoldings() {
   const { actor, isFetching } = useActor();
 
@@ -46,9 +48,17 @@ export function useGetHoldings() {
     queryKey: ['holdings'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getHoldings();
+      return actor.getHoldings('');
     },
     enabled: !!actor && !isFetching,
+    // BULLETPROOF: Holdings never become stale or get garbage collected
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Keep previous data during any refetch
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -113,13 +123,9 @@ export function useIncrementHolding() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: {
-      id: bigint;
-      additionalAmount: number;
-      additionalInvestmentGBP: number;
-    }) => {
+    mutationFn: async (params: { id: bigint; additionalInvestmentGBP: number }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.incrementHolding(params.id, params.additionalAmount, params.additionalInvestmentGBP);
+      return actor.incrementHolding(params.id, params.additionalInvestmentGBP);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
@@ -127,7 +133,7 @@ export function useIncrementHolding() {
   });
 }
 
-// Staking Rewards Queries
+// Staking Rewards Queries with bulletproof data persistence
 export function useGetStakingRewards() {
   const { actor, isFetching } = useActor();
 
@@ -138,6 +144,14 @@ export function useGetStakingRewards() {
       return actor.getStakingRewards();
     },
     enabled: !!actor && !isFetching,
+    // BULLETPROOF: Staking rewards never become stale or get garbage collected
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Keep previous data during any refetch
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -197,5 +211,38 @@ export function useGetPortfolioMetrics(timeRange: TimeRange) {
       return actor.getPortfolioMetrics(timeRange);
     },
     enabled: !!actor && !isFetching,
+    staleTime: 30000, // 30 seconds
+    gcTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+// Live Portfolio Snapshot Management
+export function useAddLivePortfolioSnapshot() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (params: { timestamp: bigint; totalValueGBP: number }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.addLivePortfolioSnapshot(params.timestamp, params.totalValueGBP);
+    },
+  });
+}
+
+export function useGetLivePortfolioHistory(fromTimestamp: bigint, toTimestamp: bigint) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<LivePortfolioSnapshot[]>({
+    queryKey: ['livePortfolioHistory', fromTimestamp.toString(), toTimestamp.toString()],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getLivePortfolioHistory(fromTimestamp, toTimestamp);
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 8000, // 8 seconds - slightly less than 10-second refresh
+    gcTime: Infinity, // Never garbage collect
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
   });
 }
