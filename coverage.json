@@ -1,35 +1,50 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-24T15:30:00.106Z",
+  "generatedAt": "2026-02-24T15:38:25.028Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 1,
-    "implemented": 1,
+    "implemented": 0,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
-        "status": "implemented",
+        "summary": "Revert the entire application (frontend and backend) to the state it was in at Version 38, undoing all changes introduced in Version 39.",
+        "status": "missing",
         "plannedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/components/AddHoldingDialog.tsx",
+          "frontend/src/components/AddStakingRewardDialog.tsx",
+          "frontend/src/components/EditHoldingDialog.tsx",
+          "frontend/src/components/EditStakingRewardDialog.tsx",
+          "frontend/src/components/Footer.tsx",
+          "frontend/src/components/Header.tsx",
           "frontend/src/components/HoldingsManager.tsx",
-          "frontend/src/components/StakingRewardsManager.tsx",
-          "frontend/src/components/PortfolioOverview.tsx",
+          "frontend/src/components/IncrementHoldingDialog.tsx",
+          "frontend/src/components/IndividualCryptoPerformance.tsx",
+          "frontend/src/components/LoginPrompt.tsx",
           "frontend/src/components/PortfolioChart.tsx",
+          "frontend/src/components/PortfolioCompositionChart.tsx",
+          "frontend/src/components/PortfolioOverview.tsx",
           "frontend/src/components/PortfolioPerformanceChart.tsx",
-          "frontend/src/components/IncrementHoldingDialog.tsx"
+          "frontend/src/components/ProfileSetupModal.tsx",
+          "frontend/src/components/StakingRewardsManager.tsx",
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/hooks/useCryptoPrices.ts",
+          "frontend/src/hooks/useInternetIdentity.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/Dashboard.tsx",
+          "frontend/src/utils/urlParams.ts",
+          "frontend/src/index.css",
+          "frontend/src/main.tsx",
+          "frontend/tailwind.config.js",
+          "frontend/index.html",
+          "frontend/index.css"
         ],
-        "matchedFiles": [
-          "frontend/src/components/HoldingsManager.tsx",
-          "frontend/src/components/StakingRewardsManager.tsx",
-          "frontend/src/components/PortfolioOverview.tsx",
-          "frontend/src/components/PortfolioChart.tsx",
-          "frontend/src/components/PortfolioPerformanceChart.tsx",
-          "frontend/src/components/IncrementHoldingDialog.tsx"
-        ]
+        "matchedFiles": []
       }
     ]
   },
@@ -37,15 +52,7 @@
     "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
-    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/HoldingsManager.tsx",
-    "frontend/src/components/IncrementHoldingDialog.tsx",
-    "frontend/src/components/IndividualCryptoPerformance.tsx",
-    "frontend/src/components/PortfolioChart.tsx",
-    "frontend/src/components/PortfolioOverview.tsx",
-    "frontend/src/components/PortfolioPerformanceChart.tsx",
-    "frontend/src/components/StakingRewardsManager.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

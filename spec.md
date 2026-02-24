@@ -1,10 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Revert the application to its Version 39 state by undoing all changes introduced in Version 40.
+**Goal:** Revert the entire application (frontend and backend) to Version 38, undoing all changes introduced in Version 39.
 
 **Planned changes:**
-- Remove the live price display next to each crypto asset that was added in Version 40
-- Restore all frontend and backend code to exactly the Version 39 state
+- Restore all frontend files to their Version 38 state
+- Restore all backend files to their Version 38 state
+- Remove any changes introduced in Version 39
 
-**User-visible outcome:** The application behaves identically to Version 39, with no live price display shown next to crypto assets.
+**User-visible outcome:** The application runs exactly as it did at Version 38, with no Version 39 changes present.

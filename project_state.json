@@ -3,20 +3,22 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [],
+  "known_issues": [
+    "Version 39 reported as buggy; user reverted to Version 38"
+  ],
   "isFixRequest": true,
-  "existing_features": [
+  "existing_features": [],
+  "new_feature_requests": [
     {
-      "id": "feature-revert-the-application-to-its-version-39-state-undoing-all-changes-introduced-in-version-40-this-includes-reverting-both-frontend-and-backend-code-to-exactly-what-was-present-before-the-version-40-build",
-      "title": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
+      "id": "AR-1",
+      "summary": "Revert the entire application (frontend and backend) to the state it was in at Version 38, undoing all changes introduced in Version 39.",
       "reqIds": [
         "REQ-1"
       ],
-      "version": 1
+      "status": "pending"
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "Revert to Version 39",
+  "projectName": "Revert application to Version 38",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

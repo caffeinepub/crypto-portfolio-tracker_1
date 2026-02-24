@@ -1,33 +1,36 @@
 {
   "kind": "build_request",
-  "title": "Revert to Version 39",
+  "title": "Revert application to Version 38",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
+      "text": "Revert the entire application (frontend and backend) to the state it was in at Version 38, undoing all changes introduced in Version 39.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "can you revert the changes to version 39?"
+          "can you revert to version 38, version 39 still buggy"
         ]
       },
       "acceptanceCriteria": [
-        "The application behaves identically to Version 39",
-        "All changes introduced in Version 40 are removed",
-        "The live price display next to each crypto asset (the Version 40 feature) is no longer present"
+        "All frontend files reflect the Version 38 state, not Version 39.",
+        "All backend files reflect the Version 38 state, not Version 39.",
+        "None of the changes introduced in Version 39 are present in the deployed application.",
+        "The application builds and deploys successfully from the Version 38 codebase."
       ]
     }
   ],
   "constraints": [
-    "Revert to exactly Version 39 — do not introduce any new changes or improvements"
+    "Do not include any changes from Version 39 or Version 40.",
+    "Restore to exactly Version 38 — do not introduce new features or fixes during the revert."
   ],
   "nonGoals": [
-    "Introducing any new features or bug fixes beyond the revert",
-    "Partial revert — all Version 40 changes must be undone"
+    "Fixing bugs present in Version 38.",
+    "Introducing any new features or improvements beyond restoring Version 38.",
+    "Preserving any Version 39 or Version 40 changes."
   ],
   "imageRequirements": {
     "required": [],

@@ -1,31 +1,28 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-24T15:30:00.103Z",
-  "summary": "The diff shows modifications to frontend components and backend files aimed at reverting Version 40 changes. The frontend-file-summaries.txt explicitly confirms that live price display (useCryptoPrices hook usage) has been removed from PortfolioOverview, HoldingsManager, PortfolioChart, StakingRewardsManager, and IncrementHoldingDialog. However, the file useCryptoPrices.ts is still present and described as having live price fetching with 10-second refresh intervals — this file should have been removed or gutted as part of the revert. The diff also shows no files were removed, which is suspicious if Version 40 introduced new files. Overall, the revert appears largely implemented but the continued presence of useCryptoPrices.ts with its Version 40 implementation raises a concern.",
+  "generatedAt": "2026-02-24T15:38:25.026Z",
+  "summary": "The diff shows only two files modified: backend/main.mo (truncated) and project_state.json. The project_state.json reflects the revert request metadata and marks REQ-1 as 'pending'. The backend/main.mo appears to show some backend state, but it is truncated and its relationship to Version 38 vs Version 39 cannot be fully verified. Critically, no frontend files are modified at all, which is a significant gap given REQ-1 explicitly requires all frontend files to reflect Version 38 state. Additionally, no other backend files beyond main.mo are shown as modified, and the revert status in project_state.json remains 'pending' rather than completed.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "All changes introduced in Version 40 are removed — specifically the useCryptoPrices.ts hook which was a Version 40 addition/modification for live price fetching should be reverted or removed",
-      "reason": "The frontend-file-summaries.txt describes useCryptoPrices.ts as still containing 'Unified price fetching hooks with comprehensive symbol mapping, automatic Revolut X to CoinGecko fallback, 10-second refresh intervals, infinite gcTime, and placeholderData' — this appears to be Version 40 functionality that was not reverted. No files were removed in the diff, yet if useCryptoPrices.ts was introduced or significantly changed in Version 40, it should have been reverted.",
+      "requirement": "All frontend files reflect the Version 38 state, not Version 39.",
+      "reason": "No frontend files appear in the diff at all (0 added, 2 modified — both are backend/main.mo and project_state.json). There is no evidence that any frontend files were reverted to Version 38.",
+      "evidence": []
+    },
+    {
+      "id": "REQ-1",
+      "requirement": "The feature request status should reflect completion of the revert, and the application should build and deploy successfully from the Version 38 codebase.",
+      "reason": "project_state.json marks AR-1 status as 'pending', indicating the revert has not been completed or confirmed. There is no evidence the application was successfully built or deployed.",
       "evidence": [
-        "frontend-file-summaries.txt",
-        "frontend/src/hooks/useCryptoPrices.ts"
+        "project_state.json"
       ]
     }
   ],
   "hallucinated_features": [],
-  "confidence": 0.6,
+  "confidence": 0.72,
   "changed_files": [
     "backend/main.mo",
-    "frontend-file-summaries.txt",
-    "frontend/src/components/HoldingsManager.tsx",
-    "frontend/src/components/IncrementHoldingDialog.tsx",
-    "frontend/src/components/IndividualCryptoPerformance.tsx",
-    "frontend/src/components/PortfolioChart.tsx",
-    "frontend/src/components/PortfolioOverview.tsx",
-    "frontend/src/components/PortfolioPerformanceChart.tsx",
-    "frontend/src/components/StakingRewardsManager.tsx",
     "project_state.json"
   ]
 }
