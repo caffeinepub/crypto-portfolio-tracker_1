@@ -1,0 +1,54 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-24T15:30:00.106Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 1,
+    "implemented": 1,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/HoldingsManager.tsx",
+          "frontend/src/components/StakingRewardsManager.tsx",
+          "frontend/src/components/PortfolioOverview.tsx",
+          "frontend/src/components/PortfolioChart.tsx",
+          "frontend/src/components/PortfolioPerformanceChart.tsx",
+          "frontend/src/components/IncrementHoldingDialog.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/HoldingsManager.tsx",
+          "frontend/src/components/StakingRewardsManager.tsx",
+          "frontend/src/components/PortfolioOverview.tsx",
+          "frontend/src/components/PortfolioChart.tsx",
+          "frontend/src/components/PortfolioPerformanceChart.tsx",
+          "frontend/src/components/IncrementHoldingDialog.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/components/HoldingsManager.tsx",
+    "frontend/src/components/IncrementHoldingDialog.tsx",
+    "frontend/src/components/IndividualCryptoPerformance.tsx",
+    "frontend/src/components/PortfolioChart.tsx",
+    "frontend/src/components/PortfolioOverview.tsx",
+    "frontend/src/components/PortfolioPerformanceChart.tsx",
+    "frontend/src/components/StakingRewardsManager.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

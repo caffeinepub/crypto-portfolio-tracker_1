@@ -1,0 +1,48 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Revert to Version 39",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Revert the application to its Version 39 state by removing all live price display features introduced in Version 40",
+      "acceptanceCriteria": [
+        "The application behaves identically to Version 39",
+        "All changes introduced in Version 40 are removed",
+        "The live price display next to each crypto asset (the Version 40 feature) is no longer present"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/HoldingsManager.tsx",
+          "operation": "modify",
+          "description": "Remove the live price column from the holdings table. Remove the 'Current Price' header and the cell displaying prices.get(holding.symbol). Remove all references to the useCryptoPrices hook and prices data. Keep the table displaying Symbol, Amount, Amount Invested (GBP), Current Value (GBP), and Actions columns only."
+        },
+        {
+          "path": "frontend/src/components/StakingRewardsManager.tsx",
+          "operation": "modify",
+          "description": "Remove the 'Current Price' column from the staking rewards table. Remove the table header cell for current price and the data cell displaying prices.get(reward.symbol). Remove all references to the useCryptoPrices hook and remove the prices constant. Keep only Symbol, Amount, Reward Date, Current Value (GBP), and Actions columns."
+        },
+        {
+          "path": "frontend/src/components/PortfolioOverview.tsx",
+          "operation": "modify",
+          "description": "Remove the live price display from the asset cards. In the asset card rendering, remove the conditional display of live prices (prices.get(symbol)) and the price loading/error states. Remove all useCryptoPrices hook usage. Display only the static portfolio metrics without live price information."
+        },
+        {
+          "path": "frontend/src/components/PortfolioChart.tsx",
+          "operation": "modify",
+          "description": "Remove live price integration from historical chart calculations. Remove all useCryptoPrices hook usage and the prices constant. Modify the chart to display only historical portfolio data without applying current live prices to past holdings. Use only the stored historical values from the backend."
+        },
+        {
+          "path": "frontend/src/components/PortfolioPerformanceChart.tsx",
+          "operation": "modify",
+          "description": "Remove live price fetching from the performance chart. Remove all useCryptoPrices hook usage and references to live prices in calculations. Display performance based solely on stored historical portfolio data from the backend without applying current market prices."
+        },
+        {
+          "path": "frontend/src/components/IncrementHoldingDialog.tsx",
+          "operation": "modify",
+          "description": "Remove live price fetching for calculating token amounts when incrementing holdings. Remove the useCryptoPrices hook and all references to prices.get(). Modify the form to require users to manually enter both the GBP investment amount and the corresponding token amount, or remove the automatic calculation feature entirely."
+        }
+      ]
+    }
+  ]
+}

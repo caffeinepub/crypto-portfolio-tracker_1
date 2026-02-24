@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-revert-the-application-to-its-version-39-state-undoing-all-changes-introduced-in-version-40-this-includes-reverting-both-frontend-and-backend-code-to-exactly-what-was-present-before-the-version-40-build",
+      "title": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [],
+  "projectName": "Revert to Version 39",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-revert-the-application-to-its-version-39-state-undoing-all-changes-introduced-in-version-40-this-includes-reverting-both-frontend-and-backend-code-to-exactly-what-was-present-before-the-version-40-build",
+      "featureTitle": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
+      "files": [
+        "frontend/src/components/HoldingsManager.tsx",
+        "frontend/src/components/IncrementHoldingDialog.tsx",
+        "frontend/src/components/PortfolioChart.tsx",
+        "frontend/src/components/PortfolioOverview.tsx",
+        "frontend/src/components/PortfolioPerformanceChart.tsx",
+        "frontend/src/components/StakingRewardsManager.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

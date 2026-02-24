@@ -1,0 +1,31 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-24T15:30:00.103Z",
+  "summary": "The diff shows modifications to frontend components and backend files aimed at reverting Version 40 changes. The frontend-file-summaries.txt explicitly confirms that live price display (useCryptoPrices hook usage) has been removed from PortfolioOverview, HoldingsManager, PortfolioChart, StakingRewardsManager, and IncrementHoldingDialog. However, the file useCryptoPrices.ts is still present and described as having live price fetching with 10-second refresh intervals — this file should have been removed or gutted as part of the revert. The diff also shows no files were removed, which is suspicious if Version 40 introduced new files. Overall, the revert appears largely implemented but the continued presence of useCryptoPrices.ts with its Version 40 implementation raises a concern.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "All changes introduced in Version 40 are removed — specifically the useCryptoPrices.ts hook which was a Version 40 addition/modification for live price fetching should be reverted or removed",
+      "reason": "The frontend-file-summaries.txt describes useCryptoPrices.ts as still containing 'Unified price fetching hooks with comprehensive symbol mapping, automatic Revolut X to CoinGecko fallback, 10-second refresh intervals, infinite gcTime, and placeholderData' — this appears to be Version 40 functionality that was not reverted. No files were removed in the diff, yet if useCryptoPrices.ts was introduced or significantly changed in Version 40, it should have been reverted.",
+      "evidence": [
+        "frontend-file-summaries.txt",
+        "frontend/src/hooks/useCryptoPrices.ts"
+      ]
+    }
+  ],
+  "hallucinated_features": [],
+  "confidence": 0.6,
+  "changed_files": [
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/HoldingsManager.tsx",
+    "frontend/src/components/IncrementHoldingDialog.tsx",
+    "frontend/src/components/IndividualCryptoPerformance.tsx",
+    "frontend/src/components/PortfolioChart.tsx",
+    "frontend/src/components/PortfolioOverview.tsx",
+    "frontend/src/components/PortfolioPerformanceChart.tsx",
+    "frontend/src/components/StakingRewardsManager.tsx",
+    "project_state.json"
+  ]
+}

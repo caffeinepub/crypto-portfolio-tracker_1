@@ -1,0 +1,36 @@
+{
+  "kind": "build_request",
+  "title": "Revert to Version 39",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Revert the application to its Version 39 state, undoing all changes introduced in Version 40. This includes reverting both frontend and backend code to exactly what was present before the Version 40 build.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "can you revert the changes to version 39?"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The application behaves identically to Version 39",
+        "All changes introduced in Version 40 are removed",
+        "The live price display next to each crypto asset (the Version 40 feature) is no longer present"
+      ]
+    }
+  ],
+  "constraints": [
+    "Revert to exactly Version 39 — do not introduce any new changes or improvements"
+  ],
+  "nonGoals": [
+    "Introducing any new features or bug fixes beyond the revert",
+    "Partial revert — all Version 40 changes must be undone"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
