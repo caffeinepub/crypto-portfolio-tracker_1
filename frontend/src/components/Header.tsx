@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Moon, Sun, Wallet } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useGetCallerUserProfile } from '../hooks/useQueries';
+import BackgroundColorPicker from './BackgroundColorPicker';
 
 export default function Header() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
@@ -38,6 +39,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-elevated">
       <div className="container flex h-16 items-center justify-between">
+        {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-primary/80 via-secondary/70 to-accent/80 shadow-glow">
             <Wallet className="h-5 w-5 text-white" />
@@ -47,16 +49,23 @@ export default function Header() {
           </h1>
         </div>
 
+        {/* Right controls */}
         <div className="flex items-center gap-3">
+          {/* Background colour picker */}
+          <div className="flex items-center gap-1.5 border border-border/40 rounded-xl px-2.5 py-1.5 bg-muted/30">
+            <span className="text-xs text-muted-foreground hidden sm:inline mr-1 whitespace-nowrap">BG:</span>
+            <BackgroundColorPicker />
+          </div>
+
           {isAuthenticated && userProfile && (
             <span className="text-sm font-medium text-muted-foreground hidden sm:inline">
               Welcome, <span className="text-foreground font-semibold">{userProfile.name}</span>
             </span>
           )}
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
+
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleTheme}
             className="rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
           >
@@ -65,9 +74,9 @@ export default function Header() {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          <Button 
-            onClick={handleAuth} 
-            disabled={disabled} 
+          <Button
+            onClick={handleAuth}
+            disabled={disabled}
             variant={isAuthenticated ? 'outline' : 'default'}
             className="rounded-xl font-semibold shadow-sm hover:shadow-glow transition-all"
           >

@@ -2,7 +2,6 @@ import Map "mo:core/Map";
 import Array "mo:core/Array";
 import Nat "mo:core/Nat";
 import Float "mo:core/Float";
-import List "mo:core/List";
 import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
@@ -20,7 +19,6 @@ import LivePortfolioSnapshot "livePortfolioSnapshot";
 import UserProfile "userProfile";
 import TimeRange "timeRange";
 
-
 actor {
   type CryptoHolding = CryptoHolding.CryptoHolding;
   type StakingReward = StakingReward.StakingReward;
@@ -34,16 +32,14 @@ actor {
   type HistoryState = Map.Map<Principal, Map.Map<Time.Time, PortfolioHistoryRecord>>;
   type SnapshotsState = Map.Map<Principal, Map.Map<Time.Time, LivePortfolioSnapshot>>;
   type UserProfilesState = Map.Map<Principal, UserProfile>;
-
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  let holdings = Map.empty<Principal, Map.Map<Nat, CryptoHolding>>();
-  let rewards = Map.empty<Principal, Map.Map<Nat, StakingReward>>();
-  let portfolioHistory = Map.empty<Principal, Map.Map<Time.Time, PortfolioHistoryRecord>>();
-  let liveSnapshots = Map.empty<Principal, Map.Map<Time.Time, LivePortfolioSnapshot>>();
-  let userProfiles = Map.empty<Principal, UserProfile>();
-
+  var holdings : HoldingsState = Map.empty();
+  var rewards : RewardsState = Map.empty();
+  var portfolioHistory : HistoryState = Map.empty();
+  var liveSnapshots : SnapshotsState = Map.empty();
+  var userProfiles : UserProfilesState = Map.empty();
   var nextHoldingId = 0;
   var nextRewardId = 0;
 
@@ -330,7 +326,11 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view portfolio metrics");
     };
-    { totalValueGBP = 0.0; totalGainLossGBP = 0.0; percentageChange = 0.0 };
+    {
+      totalValueGBP = 0.0;
+      totalGainLossGBP = 0.0;
+      percentageChange = 0.0;
+    };
   };
 
   public query ({ caller }) func getIndividualCryptoHistory(_symbol : Text, _fromTimestamp : Time.Time, _toTimestamp : Time.Time) : async [PortfolioHistoryRecord] {

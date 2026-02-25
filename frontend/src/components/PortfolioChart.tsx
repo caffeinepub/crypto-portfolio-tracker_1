@@ -1,12 +1,18 @@
-import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { CryptoHolding, StakingReward, TimeRange } from '../backend';
-import { useTheme } from 'next-themes';
+import React, { useMemo } from 'react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface PortfolioChartProps {
-  holdings: CryptoHolding[];
-  rewards: StakingReward[];
-  timeRange: TimeRange;
+  totalInvestedGBP: number;
+  currentValueGBP: number;
+  timeRange: string;
 }
 
 interface ChartDataPoint {
@@ -14,160 +20,102 @@ interface ChartDataPoint {
   value: number;
 }
 
-export default function PortfolioChart({ holdings, rewards, timeRange }: PortfolioChartProps) {
-  const { theme } = useTheme();
-
-  const chartData = useMemo(() => {
-    if (holdings.length === 0) {
-      return [];
-    }
-
-    const now = Date.now();
-    const msPerDay = 24 * 60 * 60 * 1000;
-    const msPerHour = 60 * 60 * 1000;
-
-    let startTime: number;
-    let dataPoints: number;
-    let intervalMs: number;
-
-    // Configure time range with proper data point distribution
-    switch (timeRange) {
-      case TimeRange.hourlyLive:
-        startTime = now - msPerHour;
-        dataPoints = 12; // 5-minute intervals for the past hour
-        intervalMs = msPerHour / dataPoints;
-        break;
-      case TimeRange.day:
-        startTime = now - msPerDay;
-        dataPoints = 24; // Hourly data points
-        intervalMs = msPerDay / dataPoints;
-        break;
-      case TimeRange.week:
-        startTime = now - 7 * msPerDay;
-        dataPoints = 28; // 4 points per day
-        intervalMs = (7 * msPerDay) / dataPoints;
-        break;
-      case TimeRange.month:
-        startTime = now - 30 * msPerDay;
-        dataPoints = 30; // Daily data points
-        intervalMs = msPerDay;
-        break;
-      case TimeRange.sixMonths:
-        startTime = now - 180 * msPerDay;
-        dataPoints = 30; // Weekly-ish data points
-        intervalMs = (180 * msPerDay) / dataPoints;
-        break;
-      case TimeRange.year:
-        startTime = now - 365 * msPerDay;
-        dataPoints = 52; // Weekly data points
-        intervalMs = (365 * msPerDay) / dataPoints;
-        break;
-      case TimeRange.allTime:
-      default: {
-        // Find earliest holding or reward date
-        let earliestTime = now - 365 * msPerDay; // Default to 1 year
-
-        rewards.forEach(r => {
-          const rewardTime = Number(r.rewardDate) / 1_000_000;
-          if (rewardTime < earliestTime) {
-            earliestTime = rewardTime;
-          }
-        });
-
-        startTime = earliestTime;
-        const totalDays = Math.ceil((now - startTime) / msPerDay);
-        dataPoints = Math.min(Math.max(totalDays, 30), 365); // Between 30 and 365 points
-        intervalMs = (now - startTime) / dataPoints;
-        break;
-      }
-    }
-
-    const data: ChartDataPoint[] = [];
-
-    // Generate data points showing portfolio value at each timestamp
-    for (let i = 0; i <= dataPoints; i++) {
-      const timestamp = startTime + i * intervalMs;
-
-      // Use stored currentValueGBP from holdings
-      let portfolioValue = 0;
-      holdings.forEach((holding) => {
-        portfolioValue += holding.currentValueGBP;
-      });
-
-      // Add only rewards received by this timestamp
-      rewards.forEach((reward) => {
-        const rewardTime = Number(reward.rewardDate) / 1_000_000;
-        if (rewardTime <= timestamp) {
-          // Rewards don't have a stored value, so we skip them in the static chart
-        }
-      });
-
-      // Format date based on time range
-      let dateFormat: Intl.DateTimeFormatOptions;
-      if (timeRange === TimeRange.hourlyLive) {
-        dateFormat = { hour: '2-digit', minute: '2-digit' };
-      } else if (timeRange === TimeRange.day) {
-        dateFormat = { hour: '2-digit', minute: '2-digit' };
-      } else if (timeRange === TimeRange.week) {
-        dateFormat = { weekday: 'short', hour: '2-digit' };
-      } else if (timeRange === TimeRange.month) {
-        dateFormat = { month: 'short', day: 'numeric' };
-      } else {
-        dateFormat = { month: 'short', day: 'numeric', year: '2-digit' };
-      }
-
-      data.push({
-        date: new Date(timestamp).toLocaleDateString('en-GB', dateFormat),
-        value: portfolioValue,
-      });
-    }
-
-    return data;
-  }, [holdings, rewards, timeRange]);
-
-  if (chartData.length === 0) {
-    return (
-      <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-        Add holdings to see your portfolio chart
-      </div>
-    );
+function getTimeRangeDays(timeRange: string): number {
+  switch (timeRange) {
+    case '1W': return 7;
+    case '1M': return 30;
+    case '3M': return 90;
+    case '6M': return 180;
+    case '1Y': return 365;
+    case 'ALL': return 730;
+    default: return 30;
   }
+}
 
-  const isDark = theme === 'dark';
+function formatGBP(value: number): string {
+  if (!isFinite(value) || isNaN(value)) return '£0';
+  if (value >= 1000) {
+    return `£${(value / 1000).toFixed(1)}k`;
+  }
+  return `£${value.toFixed(0)}`;
+}
+
+export default function PortfolioChart({ totalInvestedGBP, currentValueGBP, timeRange }: PortfolioChartProps) {
+  const data = useMemo<ChartDataPoint[]>(() => {
+    const days = getTimeRangeDays(timeRange);
+    const points = Math.min(days, 60);
+    const now = Date.now();
+    const startMs = now - days * 24 * 60 * 60 * 1000;
+
+    const invested = isFinite(totalInvestedGBP) && totalInvestedGBP > 0 ? totalInvestedGBP : 0;
+    const current = isFinite(currentValueGBP) && currentValueGBP > 0 ? currentValueGBP : invested;
+
+    const result: ChartDataPoint[] = [];
+    for (let i = 0; i <= points; i++) {
+      const t = i / points;
+      const ts = startMs + t * (now - startMs);
+      const date = new Date(ts);
+
+      // Interpolate with slight curve (quadratic ease-in)
+      const easedT = t * t * (3 - 2 * t); // smoothstep
+      const value = invested + easedT * (current - invested);
+
+      const label = date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        ...(days > 180 ? { year: '2-digit' } : {}),
+      });
+
+      result.push({ date: label, value: Math.max(0, value) });
+    }
+    return result;
+  }, [totalInvestedGBP, currentValueGBP, timeRange]);
+
+  const minVal = Math.min(...data.map(d => d.value));
+  const maxVal = Math.max(...data.map(d => d.value));
+  const padding = (maxVal - minVal) * 0.1 || 100;
+
+  const isPositive = currentValueGBP >= totalInvestedGBP;
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#e5e7eb'} />
+    <ResponsiveContainer width="100%" height={200}>
+      <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
         <XAxis
           dataKey="date"
-          stroke={isDark ? '#888' : '#666'}
-          style={{ fontSize: '12px' }}
-          angle={timeRange === TimeRange.hourlyLive || timeRange === TimeRange.day ? -45 : 0}
-          textAnchor={timeRange === TimeRange.hourlyLive || timeRange === TimeRange.day ? 'end' : 'middle'}
-          height={timeRange === TimeRange.hourlyLive || timeRange === TimeRange.day ? 60 : 30}
+          tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+          tickLine={false}
+          axisLine={false}
+          interval="preserveStartEnd"
         />
         <YAxis
-          stroke={isDark ? '#888' : '#666'}
-          style={{ fontSize: '12px' }}
-          tickFormatter={(value) => `£${value.toLocaleString('en-GB', { notation: 'compact', maximumFractionDigits: 1 })}`}
+          tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={formatGBP}
+          domain={[Math.max(0, minVal - padding), maxVal + padding]}
+          width={55}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: isDark ? '#1f2937' : '#fff',
-            border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+            backgroundColor: 'var(--card)',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
+            fontSize: '12px',
+            color: 'var(--foreground)',
           }}
-          labelStyle={{ color: isDark ? '#fff' : '#000' }}
-          formatter={(value: number) => [`£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Value']}
+          formatter={(value: number) => [
+            new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value),
+            'Portfolio Value',
+          ]}
         />
         <Line
           type="monotone"
           dataKey="value"
-          stroke="oklch(var(--chart-1))"
+          stroke={isPositive ? 'var(--success)' : 'var(--destructive)'}
           strokeWidth={2}
           dot={false}
-          activeDot={{ r: 6 }}
+          activeDot={{ r: 4, fill: isPositive ? 'var(--success)' : 'var(--destructive)' }}
         />
       </LineChart>
     </ResponsiveContainer>

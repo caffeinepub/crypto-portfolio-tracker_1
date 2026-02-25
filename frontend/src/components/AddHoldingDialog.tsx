@@ -1,253 +1,178 @@
-import { useState, useRef, useEffect } from 'react';
-import { useAddHolding } from '../hooks/useQueries';
+import React, { useState } from 'react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAddHolding } from '../hooks/useQueries';
+import { useCryptoPrices, getGBPPrice } from '../hooks/useCryptoPrices';
 import { toast } from 'sonner';
-import { Check } from 'lucide-react';
+
+const SUPPORTED_SYMBOLS = [
+  'BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'MATIC', 'XRP', 'AVAX',
+  'ICP', 'BONK', 'SUI', 'XTZ', 'AMP', 'ONYX', 'LINK', 'UNI',
+  'DOGE', 'SHIB', 'LTC', 'BCH', 'ATOM', 'ALGO', 'VET', 'FIL',
+  'THETA', 'TRX', 'EOS', 'XLM', 'NEO', 'CAKE', 'SAND', 'MANA',
+  'AXS', 'GALA', 'ENJ', 'CHZ', 'BAT', 'ZRX', 'COMP', 'MKR',
+  'SNX', 'YFI', 'SUSHI', 'CRV', '1INCH', 'AAVE',
+];
 
 interface AddHoldingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-// Popular cryptocurrencies list
-const POPULAR_CRYPTOS = [
-  { symbol: 'BTC', name: 'Bitcoin' },
-  { symbol: 'ETH', name: 'Ethereum' },
-  { symbol: 'ADA', name: 'Cardano' },
-  { symbol: 'SOL', name: 'Solana' },
-  { symbol: 'DOT', name: 'Polkadot' },
-  { symbol: 'AVAX', name: 'Avalanche' },
-  { symbol: 'MATIC', name: 'Polygon' },
-  { symbol: 'XRP', name: 'Ripple' },
-  { symbol: 'BNB', name: 'Binance Coin' },
-  { symbol: 'DOGE', name: 'Dogecoin' },
-  { symbol: 'LINK', name: 'Chainlink' },
-  { symbol: 'UNI', name: 'Uniswap' },
-  { symbol: 'ATOM', name: 'Cosmos' },
-  { symbol: 'LTC', name: 'Litecoin' },
-  { symbol: 'ALGO', name: 'Algorand' },
-  { symbol: 'XLM', name: 'Stellar' },
-  { symbol: 'VET', name: 'VeChain' },
-  { symbol: 'ICP', name: 'Internet Computer' },
-  { symbol: 'FIL', name: 'Filecoin' },
-  { symbol: 'TRX', name: 'TRON' },
-  { symbol: 'SUI', name: 'Sui' },
-  { symbol: 'ONYX', name: 'Onyxcoin' },
-  { symbol: 'XTZ', name: 'Tezos' },
-  { symbol: 'BONK', name: 'Bonk' },
-  { symbol: 'AMP', name: 'AMP' },
-];
-
 export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) {
   const [symbol, setSymbol] = useState('');
   const [amount, setAmount] = useState('');
-  const [amountInvested, setAmountInvested] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [amountInvestedGBP, setAmountInvestedGBP] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const addHolding = useAddHolding();
 
-  // Filter cryptocurrencies based on input
-  const filteredCryptos = symbol.trim()
-    ? POPULAR_CRYPTOS.filter(
-        (crypto) =>
-          crypto.symbol.toLowerCase().includes(symbol.toLowerCase()) ||
-          crypto.name.toLowerCase().includes(symbol.toLowerCase())
-      )
-    : POPULAR_CRYPTOS;
+  // Fetch live price for the currently entered symbol
+  const symbolUpper = symbol.toUpperCase();
+  const { data: prices } = useCryptoPrices(symbolUpper ? [symbolUpper] : []);
+  const livePrice = getGBPPrice(prices, symbolUpper);
 
-  // Reset selected index when filtered list changes
-  useEffect(() => {
-    setSelectedIndex(-1);
-  }, [symbol]);
-
-  // Handle click outside to close suggestions
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSymbolChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSymbol(e.target.value);
-    setShowSuggestions(true);
-  };
-
-  const handleSymbolFocus = () => {
-    setShowSuggestions(true);
-  };
-
-  const selectCrypto = (crypto: { symbol: string; name: string }) => {
-    setSymbol(crypto.symbol);
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || filteredCryptos.length === 0) return;
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev < filteredCryptos.length - 1 ? prev + 1 : prev));
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case 'Enter':
-        if (selectedIndex >= 0 && selectedIndex < filteredCryptos.length) {
-          e.preventDefault();
-          selectCrypto(filteredCryptos[selectedIndex]);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
-        break;
-    }
-  };
+  const filteredSymbols = symbol
+    ? SUPPORTED_SYMBOLS.filter(s => s.toLowerCase().startsWith(symbol.toLowerCase()))
+    : SUPPORTED_SYMBOLS.slice(0, 10);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!symbol.trim() || !amount || !amountInvested) {
-      toast.error('Please fill in all fields');
+    const parsedAmount = parseFloat(amount);
+    const parsedInvested = parseFloat(amountInvestedGBP);
+
+    if (!symbol.trim()) {
+      toast.error('Please enter a symbol');
       return;
     }
-
-    const amountNum = parseFloat(amount);
-    const investedNum = parseFloat(amountInvested);
-
-    if (isNaN(amountNum) || amountNum <= 0) {
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
-
-    if (isNaN(investedNum) || investedNum <= 0) {
-      toast.error('Please enter a valid amount invested');
+    if (isNaN(parsedInvested) || parsedInvested <= 0) {
+      toast.error('Please enter a valid investment amount');
       return;
     }
 
+    const currentValueGBP = (livePrice && isFinite(livePrice) && livePrice > 0)
+      ? parsedAmount * livePrice
+      : parsedInvested;
+
     try {
       await addHolding.mutateAsync({
-        symbol: symbol.trim().toUpperCase(),
-        amount: amountNum,
-        amountInvestedGBP: investedNum,
-        currentValueGBP: investedNum,
+        symbol: symbol.toUpperCase(),
+        amount: parsedAmount,
+        amountInvestedGBP: parsedInvested,
+        currentValueGBP,
       });
-
-      toast.success('Holding added successfully');
+      toast.success(`Added ${symbol.toUpperCase()} to your holdings`);
+      onOpenChange(false);
       setSymbol('');
       setAmount('');
-      setAmountInvested('');
-      setShowSuggestions(false);
-      onOpenChange(false);
+      setAmountInvestedGBP('');
     } catch (error) {
       toast.error('Failed to add holding');
-      console.error(error);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Add Crypto Holding</DialogTitle>
-          <DialogDescription className="text-base font-medium">Add a new cryptocurrency to your portfolio</DialogDescription>
+          <DialogTitle>Add New Holding</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-5 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="symbol" className="text-sm font-semibold">Symbol</Label>
-              <div className="relative">
-                <Input
-                  ref={inputRef}
-                  id="symbol"
-                  placeholder="BTC, ETH, etc."
-                  value={symbol}
-                  onChange={handleSymbolChange}
-                  onFocus={handleSymbolFocus}
-                  onKeyDown={handleKeyDown}
-                  disabled={addHolding.isPending}
-                  autoComplete="off"
-                  className="rounded-xl font-medium"
-                />
-                {showSuggestions && filteredCryptos.length > 0 && (
-                  <div
-                    ref={suggestionsRef}
-                    className="absolute z-50 w-full mt-2 bg-popover border border-border rounded-xl shadow-card-hover max-h-60 overflow-auto"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2 relative">
+            <Label htmlFor="symbol">Symbol</Label>
+            <Input
+              id="symbol"
+              placeholder="e.g. BTC"
+              value={symbol}
+              onChange={(e) => {
+                setSymbol(e.target.value.toUpperCase());
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+              autoComplete="off"
+              required
+            />
+            {showDropdown && filteredSymbols.length > 0 && (
+              <div className="absolute z-50 w-full bg-popover border border-border rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
+                {filteredSymbols.map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                    onMouseDown={() => {
+                      setSymbol(s);
+                      setShowDropdown(false);
+                    }}
                   >
-                    {filteredCryptos.map((crypto, index) => (
-                      <button
-                        key={crypto.symbol}
-                        type="button"
-                        onClick={() => selectCrypto(crypto)}
-                        className={`w-full px-4 py-3 text-left text-sm flex items-center justify-between hover:bg-accent/20 transition-colors ${
-                          index === selectedIndex ? 'bg-accent/20' : ''
-                        }`}
-                        onMouseEnter={() => setSelectedIndex(index)}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-bold">{crypto.symbol}</span>
-                          <span className="text-xs text-muted-foreground font-medium">{crypto.name}</span>
-                        </div>
-                        {symbol.toUpperCase() === crypto.symbol && (
-                          <Check className="h-4 w-4 text-primary" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                    <img
+                      src={`/assets/generated/${s.toLowerCase()}-logo-transparent.dim_64x64.png`}
+                      alt={s}
+                      className="w-5 h-5 rounded-full"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    {s}
+                  </button>
+                ))}
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount" className="text-sm font-semibold">Amount</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="any"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={addHolding.isPending}
-                className="rounded-xl font-medium"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amountInvested" className="text-sm font-semibold">Amount Invested (£)</Label>
-              <Input
-                id="amountInvested"
-                type="number"
-                step="any"
-                placeholder="0.00"
-                value={amountInvested}
-                onChange={(e) => setAmountInvested(e.target.value)}
-                disabled={addHolding.isPending}
-                className="rounded-xl font-medium"
-              />
-            </div>
+            )}
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="amount">Token Amount</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="any"
+              min="0"
+              placeholder="e.g. 0.5"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="amountInvestedGBP">Amount Invested (£)</Label>
+            <Input
+              id="amountInvestedGBP"
+              type="number"
+              step="any"
+              min="0"
+              placeholder="e.g. 500.00"
+              value={amountInvestedGBP}
+              onChange={(e) => setAmountInvestedGBP(e.target.value)}
+              required
+            />
+          </div>
+
+          {livePrice > 0 && symbol && (
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 text-sm">
+              <p className="text-primary">
+                Live price: £{livePrice.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} / {symbol}
+              </p>
+              {amount && !isNaN(parseFloat(amount)) && (
+                <p className="text-muted-foreground mt-1">
+                  Current value: £{(parseFloat(amount) * livePrice).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              )}
+            </div>
+          )}
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={addHolding.isPending} className="rounded-xl font-semibold">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={addHolding.isPending} className="rounded-xl font-semibold">
+            <Button type="submit" disabled={addHolding.isPending}>
               {addHolding.isPending ? 'Adding...' : 'Add Holding'}
             </Button>
           </DialogFooter>
@@ -256,4 +181,3 @@ export default function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialo
     </Dialog>
   );
 }
-

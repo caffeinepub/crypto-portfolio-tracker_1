@@ -1,193 +1,158 @@
-import { useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { CryptoHolding, StakingReward, TimeRange } from '../backend';
-import { useTheme } from 'next-themes';
+import React, { useMemo } from 'react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface PortfolioPerformanceChartProps {
-  holdings: CryptoHolding[];
-  rewards: StakingReward[];
-  timeRange: TimeRange;
+  totalInvestedGBP: number;
+  currentValueGBP: number;
+  timeRange?: string;
 }
 
 interface ChartDataPoint {
   date: string;
-  timestamp: number;
-  portfolioValue: number;
+  value: number;
+  invested: number;
 }
 
-export default function PortfolioPerformanceChart({ holdings, rewards, timeRange }: PortfolioPerformanceChartProps) {
-  const { theme } = useTheme();
-
-  const chartData = useMemo(() => {
-    if (holdings.length === 0) {
-      return [];
-    }
-
-    const now = Date.now();
-    const msPerDay = 24 * 60 * 60 * 1000;
-
-    let startTime: number;
-    let dataPoints: number;
-    let intervalMs: number;
-
-    switch (timeRange) {
-      case TimeRange.hourlyLive:
-      case TimeRange.day:
-        startTime = now - msPerDay;
-        dataPoints = 24;
-        intervalMs = msPerDay / dataPoints;
-        break;
-      case TimeRange.week:
-        startTime = now - 7 * msPerDay;
-        dataPoints = 28;
-        intervalMs = (7 * msPerDay) / dataPoints;
-        break;
-      case TimeRange.month:
-        startTime = now - 30 * msPerDay;
-        dataPoints = 30;
-        intervalMs = msPerDay;
-        break;
-      case TimeRange.sixMonths:
-        startTime = now - 180 * msPerDay;
-        dataPoints = 30;
-        intervalMs = (180 * msPerDay) / dataPoints;
-        break;
-      case TimeRange.year:
-        startTime = now - 365 * msPerDay;
-        dataPoints = 52;
-        intervalMs = (365 * msPerDay) / dataPoints;
-        break;
-      case TimeRange.allTime:
-      default: {
-        let earliestTime = now - 365 * msPerDay;
-
-        rewards.forEach(r => {
-          const rewardTime = Number(r.rewardDate) / 1_000_000;
-          if (rewardTime < earliestTime) {
-            earliestTime = rewardTime;
-          }
-        });
-
-        startTime = earliestTime;
-        const totalDays = Math.ceil((now - startTime) / msPerDay);
-        dataPoints = Math.min(Math.max(totalDays, 30), 365);
-        intervalMs = (now - startTime) / dataPoints;
-        break;
-      }
-    }
-
-    const data: ChartDataPoint[] = [];
-
-    for (let i = 0; i <= dataPoints; i++) {
-      const timestamp = startTime + i * intervalMs;
-
-      // Use stored currentValueGBP from holdings
-      let portfolioValue = 0;
-      holdings.forEach((holding) => {
-        portfolioValue += holding.currentValueGBP;
-      });
-
-      let dateFormat: Intl.DateTimeFormatOptions;
-      if (timeRange === TimeRange.hourlyLive || timeRange === TimeRange.day) {
-        dateFormat = { hour: '2-digit', minute: '2-digit' };
-      } else if (timeRange === TimeRange.week) {
-        dateFormat = { weekday: 'short', hour: '2-digit' };
-      } else if (timeRange === TimeRange.month) {
-        dateFormat = { month: 'short', day: 'numeric' };
-      } else {
-        dateFormat = { month: 'short', day: 'numeric', year: '2-digit' };
-      }
-
-      data.push({
-        date: new Date(timestamp).toLocaleDateString('en-GB', dateFormat),
-        timestamp,
-        portfolioValue,
-      });
-    }
-
-    return data;
-  }, [holdings, rewards, timeRange]);
-
-  if (chartData.length === 0) {
-    return (
-      <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-        Add holdings to see your portfolio chart
-      </div>
-    );
+function getTimeRangeDays(timeRange: string): number {
+  switch (timeRange) {
+    case '1W': return 7;
+    case '1M': return 30;
+    case '3M': return 90;
+    case '6M': return 180;
+    case '1Y': return 365;
+    case 'ALL': return 730;
+    default: return 30;
   }
+}
 
-  const isDark = theme === 'dark';
+function formatGBP(value: number): string {
+  if (!isFinite(value) || isNaN(value)) return '£0';
+  if (value >= 1000) {
+    return `£${(value / 1000).toFixed(1)}k`;
+  }
+  return `£${value.toFixed(0)}`;
+}
 
-  const isGaining = chartData.length >= 2 &&
-    chartData[chartData.length - 1].portfolioValue >= chartData[0].portfolioValue;
+export default function PortfolioPerformanceChart({
+  totalInvestedGBP,
+  currentValueGBP,
+  timeRange = '1M',
+}: PortfolioPerformanceChartProps) {
+  const data = useMemo<ChartDataPoint[]>(() => {
+    const days = getTimeRangeDays(timeRange);
+    const points = Math.min(days, 60);
+    const now = Date.now();
+    const startMs = now - days * 24 * 60 * 60 * 1000;
 
-  const values = chartData.map(d => d.portfolioValue);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const padding = (maxValue - minValue) * 0.1 || maxValue * 0.1 || 10;
-  const yAxisDomain: [number, number] = [
-    Math.max(0, minValue - padding),
-    maxValue + padding
-  ];
+    const invested = isFinite(totalInvestedGBP) && totalInvestedGBP > 0 ? totalInvestedGBP : 0;
+    const current = isFinite(currentValueGBP) && currentValueGBP > 0 ? currentValueGBP : invested;
+
+    const result: ChartDataPoint[] = [];
+    for (let i = 0; i <= points; i++) {
+      const t = i / points;
+      const ts = startMs + t * (now - startMs);
+      const date = new Date(ts);
+
+      // Smoothstep interpolation
+      const easedT = t * t * (3 - 2 * t);
+      const value = invested + easedT * (current - invested);
+
+      const label = date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        ...(days > 180 ? { year: '2-digit' } : {}),
+      });
+
+      result.push({
+        date: label,
+        value: Math.max(0, value),
+        invested: invested,
+      });
+    }
+    return result;
+  }, [totalInvestedGBP, currentValueGBP, timeRange]);
+
+  const minVal = Math.min(...data.map(d => Math.min(d.value, d.invested)));
+  const maxVal = Math.max(...data.map(d => Math.max(d.value, d.invested)));
+  const padding = (maxVal - minVal) * 0.1 || 100;
+
+  const isPositive = currentValueGBP >= totalInvestedGBP;
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={chartData}>
+    <ResponsiveContainer width="100%" height={220}>
+      <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
         <defs>
           <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
             <stop
               offset="5%"
-              stopColor={isGaining ? 'oklch(0.70 0.20 145)' : 'oklch(0.65 0.25 27)'}
+              stopColor={isPositive ? 'var(--success)' : 'var(--destructive)'}
               stopOpacity={0.3}
             />
             <stop
               offset="95%"
-              stopColor={isGaining ? 'oklch(0.70 0.20 145)' : 'oklch(0.65 0.25 27)'}
-              stopOpacity={0}
+              stopColor={isPositive ? 'var(--success)' : 'var(--destructive)'}
+              stopOpacity={0.02}
             />
           </linearGradient>
+          <linearGradient id="investedGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="var(--muted-foreground)" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="var(--muted-foreground)" stopOpacity={0.02} />
+          </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#e5e7eb'} opacity={0.3} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
         <XAxis
           dataKey="date"
-          stroke={isDark ? '#888' : '#666'}
-          style={{ fontSize: '11px' }}
-          angle={timeRange === TimeRange.day || timeRange === TimeRange.hourlyLive ? -45 : 0}
-          textAnchor={timeRange === TimeRange.day || timeRange === TimeRange.hourlyLive ? 'end' : 'middle'}
-          height={timeRange === TimeRange.day || timeRange === TimeRange.hourlyLive ? 60 : 30}
-          tick={{ fill: isDark ? '#888' : '#666' }}
+          tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+          tickLine={false}
+          axisLine={false}
+          interval="preserveStartEnd"
         />
         <YAxis
-          stroke={isDark ? '#888' : '#666'}
-          style={{ fontSize: '11px' }}
-          domain={yAxisDomain}
-          tickFormatter={(value) => `£${value.toLocaleString('en-GB', { notation: 'compact', maximumFractionDigits: 1 })}`}
-          tick={{ fill: isDark ? '#888' : '#666' }}
+          tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={formatGBP}
+          domain={[Math.max(0, minVal - padding), maxVal + padding]}
+          width={55}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: isDark ? 'oklch(0.16 0 0)' : 'oklch(1 0 0)',
-            border: `1px solid ${isDark ? 'oklch(0.24 0 0)' : 'oklch(0.90 0 0)'}`,
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            backgroundColor: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            fontSize: '12px',
+            color: 'var(--foreground)',
           }}
-          labelStyle={{ color: isDark ? 'oklch(0.98 0 0)' : 'oklch(0.145 0 0)', fontWeight: 600 }}
-          formatter={(value: number) => [
-            `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            'Value'
+          formatter={(value: number, name: string) => [
+            new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value),
+            name === 'value' ? 'Portfolio Value' : 'Invested',
           ]}
         />
         <Area
           type="monotone"
-          dataKey="portfolioValue"
-          stroke={isGaining ? 'oklch(0.70 0.20 145)' : 'oklch(0.65 0.25 27)'}
-          strokeWidth={3}
+          dataKey="invested"
+          stroke="var(--muted-foreground)"
+          strokeWidth={1.5}
+          strokeDasharray="4 4"
+          fill="url(#investedGradient)"
+          dot={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke={isPositive ? 'var(--success)' : 'var(--destructive)'}
+          strokeWidth={2}
           fill="url(#portfolioGradient)"
           dot={false}
-          activeDot={{ r: 6, strokeWidth: 2 }}
-          animationDuration={800}
-          animationEasing="ease-in-out"
-          isAnimationActive={true}
+          activeDot={{ r: 4 }}
         />
       </AreaChart>
     </ResponsiveContainer>

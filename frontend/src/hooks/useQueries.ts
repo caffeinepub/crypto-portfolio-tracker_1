@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { CryptoHolding, StakingReward, UserProfile, TimeRange, PortfolioMetrics, LivePortfolioSnapshot } from '../backend';
+import { CryptoHolding, StakingReward, UserProfile, PortfolioHistoryRecord } from '../backend';
 
-// User Profile Queries
+// ─── User Profile ────────────────────────────────────────────────────────────
+
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
@@ -14,8 +15,8 @@ export function useGetCallerUserProfile() {
     },
     enabled: !!actor && !actorFetching,
     retry: false,
-    gcTime: Infinity, // Never garbage collect user profile
-    staleTime: Infinity, // Profile doesn't become stale
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 
   return {
@@ -40,25 +41,24 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-// Holdings Queries with bulletproof data persistence
-export function useGetHoldings() {
-  const { actor, isFetching } = useActor();
+// ─── Holdings ────────────────────────────────────────────────────────────────
+
+export function useGetHoldings(sortBy = 'default') {
+  const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<CryptoHolding[]>({
-    queryKey: ['holdings'],
+    queryKey: ['holdings', sortBy],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getHoldings('');
+      return actor.getHoldings(sortBy);
     },
-    enabled: !!actor && !isFetching,
-    // BULLETPROOF: Holdings never become stale or get garbage collected
+    enabled: !!actor && !actorFetching,
     staleTime: Infinity,
     gcTime: Infinity,
-    refetchOnMount: false,
+    placeholderData: (prev) => prev ?? [],
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     refetchOnReconnect: false,
-    // Keep previous data during any refetch
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -67,14 +67,19 @@ export function useAddHolding() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: {
+    mutationFn: async ({
+      symbol,
+      amount,
+      amountInvestedGBP,
+      currentValueGBP,
+    }: {
       symbol: string;
       amount: number;
       amountInvestedGBP: number;
       currentValueGBP: number;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.addHolding(params.symbol, params.amount, params.amountInvestedGBP, params.currentValueGBP);
+      return actor.addHolding(symbol, amount, amountInvestedGBP, currentValueGBP);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
@@ -87,7 +92,13 @@ export function useUpdateHolding() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: {
+    mutationFn: async ({
+      id,
+      symbol,
+      amount,
+      amountInvestedGBP,
+      currentValueGBP,
+    }: {
       id: bigint;
       symbol: string;
       amount: number;
@@ -95,7 +106,7 @@ export function useUpdateHolding() {
       currentValueGBP: number;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.updateHolding(params.id, params.symbol, params.amount, params.amountInvestedGBP, params.currentValueGBP);
+      return actor.updateHolding(id, symbol, amount, amountInvestedGBP, currentValueGBP);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
@@ -123,9 +134,32 @@ export function useIncrementHolding() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { id: bigint; additionalInvestmentGBP: number }) => {
+    mutationFn: async ({
+      id,
+      additionalAmount,
+      additionalInvestmentGBP,
+      currentValueGBP,
+      symbol,
+      existingAmount,
+      existingAmountInvestedGBP,
+    }: {
+      id: bigint;
+      additionalAmount: number;
+      additionalInvestmentGBP: number;
+      currentValueGBP: number;
+      symbol: string;
+      existingAmount: number;
+      existingAmountInvestedGBP: number;
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.incrementHolding(params.id, params.additionalInvestmentGBP);
+      // Use updateHolding to update both amount and investment
+      return actor.updateHolding(
+        id,
+        symbol,
+        existingAmount + additionalAmount,
+        existingAmountInvestedGBP + additionalInvestmentGBP,
+        currentValueGBP,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
@@ -133,9 +167,10 @@ export function useIncrementHolding() {
   });
 }
 
-// Staking Rewards Queries with bulletproof data persistence
+// ─── Staking Rewards ─────────────────────────────────────────────────────────
+
 export function useGetStakingRewards() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<StakingReward[]>({
     queryKey: ['stakingRewards'],
@@ -143,15 +178,13 @@ export function useGetStakingRewards() {
       if (!actor) return [];
       return actor.getStakingRewards();
     },
-    enabled: !!actor && !isFetching,
-    // BULLETPROOF: Staking rewards never become stale or get garbage collected
+    enabled: !!actor && !actorFetching,
     staleTime: Infinity,
     gcTime: Infinity,
-    refetchOnMount: false,
+    placeholderData: (prev) => prev ?? [],
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     refetchOnReconnect: false,
-    // Keep previous data during any refetch
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -160,9 +193,17 @@ export function useAddStakingReward() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { symbol: string; amount: number; rewardDate: bigint }) => {
+    mutationFn: async ({
+      symbol,
+      amount,
+      rewardDate,
+    }: {
+      symbol: string;
+      amount: number;
+      rewardDate: bigint;
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.addStakingReward(params.symbol, params.amount, params.rewardDate);
+      return actor.addStakingReward(symbol, amount, rewardDate);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stakingRewards'] });
@@ -175,9 +216,19 @@ export function useUpdateStakingReward() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { id: bigint; symbol: string; amount: number; rewardDate: bigint }) => {
+    mutationFn: async ({
+      id,
+      symbol,
+      amount,
+      rewardDate,
+    }: {
+      id: bigint;
+      symbol: string;
+      amount: number;
+      rewardDate: bigint;
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.updateStakingReward(params.id, params.symbol, params.amount, params.rewardDate);
+      return actor.updateStakingReward(id, symbol, amount, rewardDate);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stakingRewards'] });
@@ -200,49 +251,20 @@ export function useDeleteStakingReward() {
   });
 }
 
-// Portfolio Metrics Query
-export function useGetPortfolioMetrics(timeRange: TimeRange) {
-  const { actor, isFetching } = useActor();
+// ─── Portfolio History ────────────────────────────────────────────────────────
 
-  return useQuery<PortfolioMetrics>({
-    queryKey: ['portfolioMetrics', timeRange],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getPortfolioMetrics(timeRange);
-    },
-    enabled: !!actor && !isFetching,
-    staleTime: 30000, // 30 seconds
-    gcTime: Infinity,
-    placeholderData: (previousData) => previousData,
-  });
-}
+export function useGetPortfolioHistory(fromTimestamp: bigint, toTimestamp: bigint) {
+  const { actor, isFetching: actorFetching } = useActor();
 
-// Live Portfolio Snapshot Management
-export function useAddLivePortfolioSnapshot() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (params: { timestamp: bigint; totalValueGBP: number }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.addLivePortfolioSnapshot(params.timestamp, params.totalValueGBP);
-    },
-  });
-}
-
-export function useGetLivePortfolioHistory(fromTimestamp: bigint, toTimestamp: bigint) {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<LivePortfolioSnapshot[]>({
-    queryKey: ['livePortfolioHistory', fromTimestamp.toString(), toTimestamp.toString()],
+  return useQuery<PortfolioHistoryRecord[]>({
+    queryKey: ['portfolioHistory', fromTimestamp.toString(), toTimestamp.toString()],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getLivePortfolioHistory(fromTimestamp, toTimestamp);
+      return actor.getPortfolioHistory(fromTimestamp, toTimestamp);
     },
-    enabled: !!actor && !isFetching,
-    staleTime: 8000, // 8 seconds - slightly less than 10-second refresh
-    gcTime: Infinity, // Never garbage collect
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    placeholderData: (previousData) => previousData,
+    enabled: !!actor && !actorFetching,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    placeholderData: (prev) => prev ?? [],
   });
 }

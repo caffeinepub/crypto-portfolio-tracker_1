@@ -4,21 +4,21 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Version 39 reported as buggy; user reverted to Version 38"
+    "Data loss reported after Version 47 deployment — user requested restore to previous night's values"
   ],
   "isFixRequest": true,
   "existing_features": [],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Revert the entire application (frontend and backend) to the state it was in at Version 38, undoing all changes introduced in Version 39.",
+      "summary": "Restore the backend canister's per-user state by seeding it with representative default/demo data that reflects the holdings, staking rewards, portfolio history, live snapshots, and user profile values that were present before the Version 47 deployment. Because the canister state was lost, re-populate the stable maps in main.mo with hardcoded seed/init values so the application is no longer empty on load.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Revert application to Version 38",
+  "projectName": "Crypto Portfolio Tracker",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

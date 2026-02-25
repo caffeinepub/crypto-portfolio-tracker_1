@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-24T15:38:25.028Z",
+  "generatedAt": "2026-02-25T07:41:40.968Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,38 +12,9 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Revert the entire application (frontend and backend) to the state it was in at Version 38, undoing all changes introduced in Version 39.",
-        "status": "missing",
-        "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/AddHoldingDialog.tsx",
-          "frontend/src/components/AddStakingRewardDialog.tsx",
-          "frontend/src/components/EditHoldingDialog.tsx",
-          "frontend/src/components/EditStakingRewardDialog.tsx",
-          "frontend/src/components/Footer.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/HoldingsManager.tsx",
-          "frontend/src/components/IncrementHoldingDialog.tsx",
-          "frontend/src/components/IndividualCryptoPerformance.tsx",
-          "frontend/src/components/LoginPrompt.tsx",
-          "frontend/src/components/PortfolioChart.tsx",
-          "frontend/src/components/PortfolioCompositionChart.tsx",
-          "frontend/src/components/PortfolioOverview.tsx",
-          "frontend/src/components/PortfolioPerformanceChart.tsx",
-          "frontend/src/components/ProfileSetupModal.tsx",
-          "frontend/src/components/StakingRewardsManager.tsx",
-          "frontend/src/hooks/useActor.ts",
-          "frontend/src/hooks/useCryptoPrices.ts",
-          "frontend/src/hooks/useInternetIdentity.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/Dashboard.tsx",
-          "frontend/src/utils/urlParams.ts",
-          "frontend/src/index.css",
-          "frontend/src/main.tsx",
-          "frontend/tailwind.config.js",
-          "frontend/index.html",
-          "frontend/index.css"
-        ],
+        "summary": "Restore the backend canister's per-user state by seeding it with representative default/demo data that reflects the holdings, staking rewards, portfolio history, live snapshots, and user profile values that were present before the Version 47 deployment. Because the canister state was lost, re-populate the stable maps in main.mo with hardcoded seed/init values so the application is no longer empty on load.",
+        "status": "unknown",
+        "plannedFiles": [],
         "matchedFiles": []
       }
     ]
@@ -53,6 +24,10 @@
     "build-request.json",
     "feature_evidence.json",
     "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

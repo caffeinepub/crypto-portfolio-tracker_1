@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Revert the entire application (frontend and backend) to Version 38, undoing all changes introduced in Version 39.
+**Goal:** Restore the backend canister's lost state by seeding it with hardcoded representative data so the app is no longer empty after the Version 47 deployment wiped the canister state.
 
 **Planned changes:**
-- Restore all frontend files to their Version 38 state
-- Restore all backend files to their Version 38 state
-- Remove any changes introduced in Version 39
+- Populate the backend `main.mo` stable maps with hardcoded seed/init values for holdings, staking rewards, portfolio history records, live portfolio snapshots, and user profile.
+- Ensure seed data is initialised on canister load so it persists across upgrades.
 
-**User-visible outcome:** The application runs exactly as it did at Version 38, with no Version 39 changes present.
+**User-visible outcome:** On app load, the dashboard displays non-empty holdings, staking rewards, portfolio history, and a user profile name instead of a blank state.

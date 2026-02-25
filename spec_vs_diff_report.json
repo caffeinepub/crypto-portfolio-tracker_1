@@ -1,26 +1,21 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-24T15:38:25.026Z",
-  "summary": "The diff shows only two files modified: backend/main.mo (truncated) and project_state.json. The project_state.json reflects the revert request metadata and marks REQ-1 as 'pending'. The backend/main.mo appears to show some backend state, but it is truncated and its relationship to Version 38 vs Version 39 cannot be fully verified. Critically, no frontend files are modified at all, which is a significant gap given REQ-1 explicitly requires all frontend files to reflect Version 38 state. Additionally, no other backend files beyond main.mo are shown as modified, and the revert status in project_state.json remains 'pending' rather than completed.",
+  "generatedAt": "2026-02-25T07:41:40.966Z",
+  "summary": "The diff modifies backend/main.mo but the truncated content only shows the existing actor structure with empty stable maps and standard CRUD operations. There is no evidence of hardcoded seed/init data being added to populate holdings, staking rewards, portfolio history, live snapshots, or user profiles. The project_state.json marks REQ-1 as 'pending', further confirming the requirement has not been implemented. The core requirement — seeding the stable maps with representative default/demo data — appears absent from the diff.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "All frontend files reflect the Version 38 state, not Version 39.",
-      "reason": "No frontend files appear in the diff at all (0 added, 2 modified — both are backend/main.mo and project_state.json). There is no evidence that any frontend files were reverted to Version 38.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-1",
-      "requirement": "The feature request status should reflect completion of the revert, and the application should build and deploy successfully from the Version 38 codebase.",
-      "reason": "project_state.json marks AR-1 status as 'pending', indicating the revert has not been completed or confirmed. There is no evidence the application was successfully built or deployed.",
+      "requirement": "Restore the backend canister's per-user state by seeding it with representative default/demo data (holdings, staking rewards, portfolio history, live snapshots, user profile) so the application is no longer empty on load.",
+      "reason": "The diff shows backend/main.mo still initialises all stable maps as empty (Map.empty()). No hardcoded seed entries, init block, or system func postupgrade/init with seed data is visible in the truncated content. project_state.json explicitly marks the feature request as 'pending'.",
       "evidence": [
+        "backend/main.mo",
         "project_state.json"
       ]
     }
   ],
   "hallucinated_features": [],
-  "confidence": 0.72,
+  "confidence": 0.82,
   "changed_files": [
     "backend/main.mo",
     "project_state.json"
